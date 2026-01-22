@@ -1,0 +1,219 @@
+{
+  "info": {
+    "name": "Rockets Event Sourcing",
+    "description": "Collection para probar Event Sourcing con cohetes",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "1. Launch rocket-alpha (RocketLaunched)",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"metadata\": {\n    \"channel\": \"rocket-alpha\",\n    \"messageNumber\": 1,\n    \"messageTime\": \"2022-02-02T19:39:05.86337+01:00\",\n    \"messageType\": \"RocketLaunched\"\n  },\n  \"message\": {\n    \"type\": \"Falcon-9\",\n    \"launchSpeed\": 15000,\n    \"mission\": \"exploration\"\n  }\n}"
+        },
+        "url": {
+          "raw": "http://localhost:8088/messages",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "8088",
+          "path": [
+            "messages"
+          ]
+        }
+      }
+    },
+    {
+      "name": "2. Increase speed (RocketSpeedIncreased)",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"metadata\": {\n    \"channel\": \"rocket-alpha\",\n    \"messageNumber\": 2,\n    \"messageTime\": \"2022-02-02T19:39:06.86337+01:00\",\n    \"messageType\": \"RocketSpeedIncreased\"\n  },\n  \"message\": {\n    \"by\": 5000\n  }\n}"
+        },
+        "url": {
+          "raw": "http://localhost:8088/messages",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "8088",
+          "path": [
+            "messages"
+          ]
+        }
+      }
+    },
+    {
+      "name": "3. Decrease speed (RocketSpeedDecreased)",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"metadata\": {\n    \"channel\": \"rocket-alpha\",\n    \"messageNumber\": 3,\n    \"messageTime\": \"2022-02-02T19:39:07.86337+01:00\",\n    \"messageType\": \"RocketSpeedDecreased\"\n  },\n  \"message\": {\n    \"by\": 3000\n  }\n}"
+        },
+        "url": {
+          "raw": "http://localhost:8088/messages",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "8088",
+          "path": [
+            "messages"
+          ]
+        }
+      }
+    },
+    {
+      "name": "4. Change mission (RocketMissionChanged)",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"metadata\": {\n    \"channel\": \"rocket-alpha\",\n    \"messageNumber\": 4,\n    \"messageTime\": \"2022-02-02T19:39:08.86337+01:00\",\n    \"messageType\": \"RocketMissionChanged\"\n  },\n  \"message\": {\n    \"newMission\": \"satellite\"\n  }\n}"
+        },
+        "url": {
+          "raw": "http://localhost:8088/messages",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "8088",
+          "path": [
+            "messages"
+          ]
+        }
+      }
+    },
+    {
+      "name": "5. Explode (RocketExploded)",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"metadata\": {\n    \"channel\": \"rocket-alpha\",\n    \"messageNumber\": 5,\n    \"messageTime\": \"2022-02-02T19:39:09.86337+01:00\",\n    \"messageType\": \"RocketExploded\"\n  },\n  \"message\": {\n    \"reason\": \"fuel leak detected\"\n  }\n}"
+        },
+        "url": {
+          "raw": "http://localhost:8088/messages",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "8088",
+          "path": [
+            "messages"
+          ]
+        }
+      }
+    },
+    {
+      "name": "GET Events (rocket-alpha)",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "http://localhost:8088/rockets/rocket-alpha/events",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "8088",
+          "path": [
+            "rockets",
+            "rocket-alpha",
+            "events"
+          ]
+        }
+      }
+    },
+    {
+      "name": "GET Rocket Status (rocket-alpha)",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "http://localhost:8088/rockets/rocket-alpha",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "8088",
+          "path": [
+            "rockets",
+            "rocket-alpha"
+          ]
+        }
+      }
+    },
+    {
+      "name": "GET All Rockets",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "http://localhost:8088/rockets",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "8088",
+          "path": [
+            "rockets"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Health Check",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "http://localhost:8088/health",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "8088",
+          "path": [
+            "health"
+          ]
+        }
+      }
+    }
+  ]
+}

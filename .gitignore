@@ -1,0 +1,53 @@
+# Binaries for programs and plugins
+*.exe
+*.exe~
+*.dll
+*.so
+*.so.*
+*.dylib
+
+# Test binary, built with `go test -c`
+*.test
+
+# Output of the go coverage tool
+*.out
+*.cover
+*.prof
+
+# Go workspace file
+go.work
+
+# Dependency directories
+vendor/
+
+# Go mod download cache
+go/pkg/mod/
+
+# Compiled artifacts
+bin/
+dist/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Environment variables
+.env
+.env.local
+.env.*.local
+
+# Docker
+.dockerignore
+
+# Logs
+*.log
+logs/
+
+# Coverage
+*.coverprofile
+coverage.txt
+coverage.html
