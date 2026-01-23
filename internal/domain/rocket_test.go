@@ -46,7 +46,9 @@ func TestRocketCannotLaunchTwice(t *testing.T) {
 	speed, _ := NewSpeed(15000)
 	mission := NewMission("exploration")
 
-	rocket.Launch(msgNum1, "Falcon-9", speed, mission, 1234567890)
+	if err := rocket.Launch(msgNum1, "Falcon-9", speed, mission, 1234567890); err != nil {
+		t.Fatalf("Expected no error launching first time, got %v", err)
+	}
 
 	// Act
 	err := rocket.Launch(msgNum2, "Falcon-9", speed, mission, 1234567891)
@@ -68,7 +70,9 @@ func TestRocketIncreaseSpeed(t *testing.T) {
 	speed, _ := NewSpeed(15000)
 	mission := NewMission("exploration")
 
-	rocket.Launch(msgNum1, "Falcon-9", speed, mission, 1234567890)
+	if err := rocket.Launch(msgNum1, "Falcon-9", speed, mission, 1234567890); err != nil {
+		t.Fatalf("Expected no error launching first time, got %v", err)
+	}
 
 	// Act
 	err := rocket.IncreaseSpeed(msgNum2, 5000, 1234567891)
@@ -93,7 +97,9 @@ func TestRocketDecreaseSpeed(t *testing.T) {
 	speed, _ := NewSpeed(15000)
 	mission := NewMission("exploration")
 
-	rocket.Launch(msgNum1, "Falcon-9", speed, mission, 1234567890)
+	if err := rocket.Launch(msgNum1, "Falcon-9", speed, mission, 1234567890); err != nil {
+		t.Fatalf("Expected no error launching first time, got %v", err)
+	}
 
 	// Act
 	err := rocket.DecreaseSpeed(msgNum2, 3000, 1234567891)
@@ -118,7 +124,9 @@ func TestRocketExplode(t *testing.T) {
 	speed, _ := NewSpeed(15000)
 	mission := NewMission("exploration")
 
-	rocket.Launch(msgNum1, "Falcon-9", speed, mission, 1234567890)
+	if err := rocket.Launch(msgNum1, "Falcon-9", speed, mission, 1234567890); err != nil {
+		t.Fatalf("Expected no error launching first time, got %v", err)
+	}
 
 	// Act
 	err := rocket.Explode(msgNum2, "fuel leak", 1234567891)
@@ -133,7 +141,7 @@ func TestRocketExplode(t *testing.T) {
 }
 
 // TestRocketCannotChangeAfterExplosion verifica que un cohete explotado no pueda ser modificado.
-// Resultado esperado: intentar incrementar velocidad después de explotar retorna error.
+// Expected result: trying to increase speed after exploding returns error.
 func TestRocketCannotChangeAfterExplosion(t *testing.T) {
 	// Arrange
 	channel, _ := NewChannel("rocket-1")
@@ -144,8 +152,12 @@ func TestRocketCannotChangeAfterExplosion(t *testing.T) {
 	speed, _ := NewSpeed(15000)
 	mission := NewMission("exploration")
 
-	rocket.Launch(msgNum1, "Falcon-9", speed, mission, 1234567890)
-	rocket.Explode(msgNum2, "fuel leak", 1234567891)
+	if err := rocket.Launch(msgNum1, "Falcon-9", speed, mission, 1234567890); err != nil {
+		t.Fatalf("Expected no error launching first time, got %v", err)
+	}
+	if err := rocket.Explode(msgNum2, "fuel leak", 1234567891); err != nil {
+		t.Fatalf("Expected no error exploding rocket, got %v", err)
+	}
 
 	// Act
 	err := rocket.IncreaseSpeed(msgNum3, 1000, 1234567892)

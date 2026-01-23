@@ -5,7 +5,7 @@ import (
 	"log"
 )
 
-// Rocket es el agregado raíz que representa un cohete
+// Rocket is the aggregate root representing a rocket
 type Rocket struct {
 	channel           *Channel
 	rocketType        string
@@ -136,7 +136,7 @@ func (r *Rocket) Explode(msgNum *MessageNumber, reason string, timestamp int64) 
 	return nil
 }
 
-// ChangeMission cambia la misión
+// ChangeMission changes the mission
 func (r *Rocket) ChangeMission(msgNum *MessageNumber, newMission Mission, timestamp int64) error {
 	if r.status == StatusExploded {
 		return fmt.Errorf("cannot change crashed rocket")
@@ -220,7 +220,7 @@ func (r *Rocket) GetSpeed() *Speed {
 	return r.speed
 }
 
-// GetMission retorna la misión del cohete
+// GetMission returns the rocket's mission
 func (r *Rocket) GetMission() Mission {
 	return r.mission
 }
@@ -230,7 +230,7 @@ func (r *Rocket) GetRocketType() string {
 	return r.rocketType
 }
 
-// GetLastMessageNumber retorna el último messageNumber aplicado
+// GetLastMessageNumber returns the last applied messageNumber
 func (r *Rocket) GetLastMessageNumber() *MessageNumber {
 	return r.lastMessageNumber
 }

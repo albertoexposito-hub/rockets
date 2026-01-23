@@ -2,7 +2,7 @@ package main
 
 import (
 	"context"
-	"fmt"
+	"encoding/json"
 	"log"
 	"net/http"
 	"os"
@@ -16,11 +16,11 @@ import (
 )
 
 func main() {
-	// Inicializar Kafka
+	// Initialize Kafka
 	kafkaEventStore := infrastructure.NewKafkaEventStore("localhost:9092")
-	// Inicializar Redis
+	// Initialize Redis
 	redisRepository := infrastructure.NewRocketRepository("localhost:6379", kafkaEventStore)
-	// Inicializar servicio de aplicación
+	// Initialize application service
 	rocketService := application.NewRocketApplicationService(redisRepository, kafkaEventStore)
 
 	// Configurar worker pool
@@ -38,7 +38,9 @@ func main() {
 	// Configurar manejadores HTTP
 	http.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
-		fmt.Fprintf(w, `{"status":"ok"}`)
+		if err := json.NewEncoder(w).Encode(map[string]string{"status": "ok"}); err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+		}
 	})
 	http.HandleFunc("/messages", api.HandleMessages(workerPool))
 	// Registrar rutas para listar y obtener por canal
@@ -63,12 +65,12 @@ func main() {
 		}
 	}()
 
-	// Esperar la señal de finalización
+	// Wait for termination signal
 	sigChan := make(chan os.Signal, 1)
 	signal.Notify(sigChan, os.Interrupt)
 	<-sigChan
 
-	// Graceful shutdown -> para no romper conexiones activas
+	// Graceful shutdown -> don't break active connections
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 
@@ -76,7 +78,7 @@ func main() {
 		log.Printf("Server shutdown error: %v", err)
 	}
 
-	// Detener workers tras apagar el servidor
+	// Stop workers after shutting down server
 	workerCancel()
 	workerPool.Wait()
 

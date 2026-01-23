@@ -18,6 +18,9 @@ type WorkerPool struct {
 
 // NewWorkerPool crea un pool con un numero de workers fijo.
 func NewWorkerPool(service *RocketApplicationService, workerCount int) *WorkerPool {
+	if service == nil {
+		panic("service cannot be nil")
+	}
 	if workerCount <= 0 {
 		workerCount = 1
 	}
@@ -72,6 +75,10 @@ func (p *WorkerPool) Start(ctx context.Context) {
 
 // Enqueue agrega un mensaje a la cola.
 func (p *WorkerPool) Enqueue(dto *ProcessMessageDTO) error {
+	if dto == nil {
+		return fmt.Errorf("message DTO cannot be nil")
+	}
+
 	select {
 	case <-p.ctx.Done():
 		return fmt.Errorf("worker pool stopped")

@@ -17,7 +17,7 @@ type RocketApplicationService struct {
 	bufferMutex     sync.Mutex
 }
 
-// NewRocketApplicationService crea un nuevo servicio de aplicación
+// NewRocketApplicationService creates a new application service
 func NewRocketApplicationService(repository domain.RocketRepository, eventStore domain.EventStore) *RocketApplicationService {
 	return &RocketApplicationService{
 		repository:      repository,
@@ -39,10 +39,14 @@ type ProcessMessageDTO struct {
 
 // ProcessMessage procesa un mensaje y actualiza el cohete con reordenamiento
 func (s *RocketApplicationService) ProcessMessage(dto *ProcessMessageDTO) error {
+	if dto == nil {
+		return fmt.Errorf("message DTO cannot be nil")
+	}
+
 	s.bufferMutex.Lock()
 	defer s.bufferMutex.Unlock()
 
-	// Obtener el último messageNumber esperado
+	// Get the last expected messageNumber
 	channel, err := domain.NewChannel(dto.Channel)
 	if err != nil {
 		return fmt.Errorf("invalid channel: %w", err)
@@ -94,7 +98,7 @@ func (s *RocketApplicationService) ProcessMessage(dto *ProcessMessageDTO) error 
 		s.pendingMessages[dto.Channel][dto.Number] = dto
 		log.Printf("[BUFFER] Channel: %s | Message #%d stored in buffer (waiting for #%d)", dto.Channel, dto.Number, expected)
 		log.Printf("[BUFFER] Channel: %s | Buffered messages: %v", dto.Channel, s.getBufferedMessageNumbers(dto.Channel))
-		return nil // No es error, solo está esperando
+		return nil // Not an error, just waiting
 	}
 
 	// Si es un mensaje viejo o duplicado, rechazar
@@ -104,6 +108,10 @@ func (s *RocketApplicationService) ProcessMessage(dto *ProcessMessageDTO) error 
 
 // processMessageDirect procesa un mensaje directamente (sin buffer)
 func (s *RocketApplicationService) processMessageDirect(dto *ProcessMessageDTO) error {
+	if dto == nil {
+		return fmt.Errorf("message DTO cannot be nil")
+	}
+
 	// Validar y crear value objects
 	channel, err := domain.NewChannel(dto.Channel)
 	if err != nil {
@@ -121,7 +129,7 @@ func (s *RocketApplicationService) processMessageDirect(dto *ProcessMessageDTO) 
 		return fmt.Errorf("failed to get rocket: %w", err)
 	}
 
-	// Procesar acción
+	// Process action
 	switch dto.Action {
 	case "launch":
 		speed, _ := domain.NewSpeed(dto.Value)
@@ -163,7 +171,7 @@ func (s *RocketApplicationService) processMessageDirect(dto *ProcessMessageDTO) 
 	return s.repository.Save(rocket)
 }
 
-// getBufferedMessageNumbers devuelve los números de mensajes en el buffer
+// getBufferedMessageNumbers returns the message numbers in the buffer
 func (s *RocketApplicationService) getBufferedMessageNumbers(channel string) []int {
 	numbers := []int{}
 	if s.pendingMessages[channel] == nil {
@@ -285,7 +293,7 @@ func (s *RocketApplicationService) GetBufferStatus() []*BufferStatusDTO {
 
 	var status []*BufferStatusDTO
 	for channel, messages := range s.pendingMessages {
-		// Obtener último mensaje procesado
+		// Get last processed message
 		ch, _ := domain.NewChannel(channel)
 		rocket, _ := s.repository.GetByChannel(ch)
 		expectedNext := rocket.GetLastMessageNumber().Value() + 1

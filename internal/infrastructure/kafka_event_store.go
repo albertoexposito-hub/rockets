@@ -7,15 +7,15 @@ import (
 	"rockets/internal/domain"
 )
 
-// KafkaEventStore implementa el almacén de eventos usando Kafka.
-// Nota: por ahora Kafka real está deshabilitado; solo simulamos guardando en memoria.
+// KafkaEventStore implements the event store using Kafka.
+// Note: for now real Kafka is disabled; we only simulate by storing in memory.
 type KafkaEventStore struct {
 	brokers string
 	mu      sync.RWMutex
-	events  map[string][]domain.DomainEvent // cache ordenada por inserción
+	events  map[string][]domain.DomainEvent // cache ordered by insertion
 }
 
-// NewKafkaEventStore crea un nuevo almacén de eventos
+// NewKafkaEventStore creates a new event store
 func NewKafkaEventStore(brokers string) *KafkaEventStore {
 	return &KafkaEventStore{
 		brokers: brokers,
@@ -28,7 +28,7 @@ func (k *KafkaEventStore) AppendEvent(event domain.DomainEvent) error {
 	// Enviar a Kafka (simulado)
 	log.Printf("Event stored: %s for channel: %s", event.GetEventType(), event.GetChannel().Value())
 
-	// Guardar en caché in-memory (orden de llegada)
+	// Save to in-memory cache (arrival order)
 	k.mu.Lock()
 	defer k.mu.Unlock()
 	channel := event.GetChannel().Value()

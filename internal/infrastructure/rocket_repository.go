@@ -31,7 +31,11 @@ func NewRocketRepository(redisAddr string, eventStore *KafkaEventStore) *RocketR
 
 // GetByChannel obtiene un cohete por canal
 func (r *RocketRepository) GetByChannel(channel *domain.Channel) (*domain.Rocket, error) {
-	// Intentar obtener del caché en memoria primero
+	if channel == nil {
+		return nil, fmt.Errorf("channel cannot be nil")
+	}
+
+	// Try to get from in-memory cache first
 	if cached, ok := r.cache.Load(channel.Value()); ok {
 		return cached.(*domain.Rocket), nil
 	}
@@ -45,18 +49,22 @@ func (r *RocketRepository) GetByChannel(channel *domain.Channel) (*domain.Rocket
 		_ = rocket.LoadFromHistory(events)
 	}
 
-	// Guardar en caché
+	// Save to cache
 	r.cache.Store(channel.Value(), rocket)
 
 	return rocket, nil
 }
 
-// Save persiste un cohete
+// Save persists a rocket
 func (r *RocketRepository) Save(rocket *domain.Rocket) error {
+	if rocket == nil {
+		return fmt.Errorf("rocket cannot be nil")
+	}
+
 	log.Printf("[REPO] Saving rocket | Channel: %s | Events to persist: %d",
 		rocket.GetChannel().Value(), len(rocket.GetUncommittedEvents()))
 
-	// Guardar en caché
+	// Save to cache
 	r.cache.Store(rocket.GetChannel().Value(), rocket)
 
 	// Guardar eventos en el event store
@@ -88,10 +96,10 @@ func (r *RocketRepository) GetAll() ([]*domain.Rocket, error) {
 	for _, channelStr := range channels {
 		channel, err := domain.NewChannel(channelStr)
 		if err != nil {
-			continue // Skip canales inválidos
+			continue // Skip invalid channels
 		}
 
-		// Usar GetByChannel que hace replay automático
+		// Use GetByChannel which does automatic replay
 		rocket, err := r.GetByChannel(channel)
 		if err != nil {
 			continue

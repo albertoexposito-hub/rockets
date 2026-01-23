@@ -25,8 +25,7 @@ func setupTestServer() (*application.WorkerPool, *application.RocketApplicationS
 	return pool, service
 }
 
-// TestHandleMessagesValidLaunch verifica que el endpoint POST /messages acepte un mensaje válido.
-// Resultado esperado: HTTP 202 Accepted, mensaje encolado para procesamiento.
+// TestHandleMessagesValidLaunch verifies that POST /messages endpoint accepts a valid message.
 func TestHandleMessagesValidLaunch(t *testing.T) {
 	// Arrange
 	pool, _ := setupTestServer()
@@ -62,8 +61,7 @@ func TestHandleMessagesValidLaunch(t *testing.T) {
 	time.Sleep(100 * time.Millisecond)
 }
 
-// TestHandleMessagesInvalidMethod verifica que solo se acepte el método POST.
-// Resultado esperado: HTTP 405 Method Not Allowed para GET.
+// TestHandleMessagesInvalidMethod verifies that only POST method is accepted.
 func TestHandleMessagesInvalidMethod(t *testing.T) {
 	// Arrange
 	pool, _ := setupTestServer()
@@ -81,8 +79,7 @@ func TestHandleMessagesInvalidMethod(t *testing.T) {
 	}
 }
 
-// TestHandleMessagesInvalidJSON verifica que se rechacen mensajes con JSON inválido.
-// Resultado esperado: HTTP 400 Bad Request.
+// TestHandleMessagesInvalidJSON verifies that messages with invalid JSON are rejected.
 func TestHandleMessagesInvalidJSON(t *testing.T) {
 	// Arrange
 	pool, _ := setupTestServer()
@@ -100,9 +97,9 @@ func TestHandleMessagesInvalidJSON(t *testing.T) {
 	}
 }
 
-// TestHandleListRocketsGetAll verifica que GET /rockets devuelva todos los cohetes.
-// Crea 2 cohetes (rocket-list-1 y rocket-list-2).
-// Resultado esperado: HTTP 200 OK, lista con al menos 2 cohetes.
+// TestHandleListRocketsGetAll verifies that GET /rockets returns all rockets.
+// Creates 2 rockets (rocket-list-1 and rocket-list-2).
+// Expected result: HTTP 200 OK, list with at least 2 rockets.
 func TestHandleListRocketsGetAll(t *testing.T) {
 	// Arrange
 	_, service := setupTestServer()
@@ -127,8 +124,12 @@ func TestHandleListRocketsGetAll(t *testing.T) {
 		Time:       1234567890,
 	}
 
-	service.ProcessMessage(msg1)
-	service.ProcessMessage(msg2)
+	if err := service.ProcessMessage(msg1); err != nil {
+		t.Fatalf("Expected no error message 1, got %v", err)
+	}
+	if err := service.ProcessMessage(msg2); err != nil {
+		t.Fatalf("Expected no error message2, got %v", err)
+	}
 
 	handler := HandleListRockets(service)
 	req := httptest.NewRequest(http.MethodGet, "/rockets", nil)
@@ -143,15 +144,17 @@ func TestHandleListRocketsGetAll(t *testing.T) {
 	}
 
 	var rockets []application.RocketDTO
-	json.Unmarshal(w.Body.Bytes(), &rockets)
+	if err := json.Unmarshal(w.Body.Bytes(), &rockets); err != nil {
+		t.Fatalf("Failed to unmarshal response: %v", err)
+	}
 
 	if len(rockets) < 2 {
 		t.Errorf("Expected at least 2 rockets, got %d", len(rockets))
 	}
 }
 
-// TestHandleListRocketsGetByChannel verifica que GET /rockets/{channel} devuelva un cohete específico.
-// Resultado esperado: HTTP 200 OK, datos del cohete (channel=rocket-specific, type=Falcon-9).
+// TestHandleListRocketsGetByChannel verifies that GET /rockets/{channel} returns a specific rocket.
+// Expected result: HTTP 200 OK, rocket data (channel=rocket-specific, type=Falcon-9).
 func TestHandleListRocketsGetByChannel(t *testing.T) {
 	// Arrange
 	_, service := setupTestServer()
@@ -166,7 +169,9 @@ func TestHandleListRocketsGetByChannel(t *testing.T) {
 		Time:       1234567890,
 	}
 
-	service.ProcessMessage(msg)
+	if err := service.ProcessMessage(msg); err != nil {
+		t.Fatalf("Expected no error processing message, got %v", err)
+	}
 	time.Sleep(50 * time.Millisecond)
 
 	handler := HandleListRockets(service)
@@ -182,7 +187,9 @@ func TestHandleListRocketsGetByChannel(t *testing.T) {
 	}
 
 	var rocket application.RocketDTO
-	json.Unmarshal(w.Body.Bytes(), &rocket)
+	if err := json.Unmarshal(w.Body.Bytes(), &rocket); err != nil {
+		t.Fatalf("Failed to unmarshal response: %v", err)
+	}
 
 	if rocket.Channel != "rocket-specific" {
 		t.Errorf("Expected channel rocket-specific, got %s", rocket.Channel)

@@ -13,7 +13,6 @@ import (
 	"rockets/internal/application"
 )
 
-// LunarMessage es el formato oficial del challenge
 type LunarMessage struct {
 	Metadata struct {
 		Channel       string `json:"channel"`
@@ -26,10 +25,10 @@ type LunarMessage struct {
 
 // convertLunarMessageToDTO convierte el formato oficial al internal ProcessMessageDTO
 func convertLunarMessageToDTO(msg *LunarMessage) (*application.ProcessMessageDTO, error) {
-	// Parsear messageTime (ISO8601) a Unix milliseconds
+	// Parse messageTime (ISO8601) to Unix milliseconds
 	t, err := time.Parse(time.RFC3339Nano, msg.Metadata.MessageTime)
 	if err != nil {
-		// Intentar parse con formato más simple
+		// Try parsing with simpler format
 		t, err = time.Parse(time.RFC3339, msg.Metadata.MessageTime)
 		if err != nil {
 			return nil, fmt.Errorf("invalid messageTime: %w", err)
@@ -43,7 +42,7 @@ func convertLunarMessageToDTO(msg *LunarMessage) (*application.ProcessMessageDTO
 		Time:    timestamp,
 	}
 
-	// Mapear messageType a action y extraer parámetros
+	// Map messageType to action and extract parameters
 	switch msg.Metadata.MessageType {
 	case "RocketLaunched":
 		dto.Action = "launch"
@@ -96,13 +95,13 @@ func convertLunarMessageToDTO(msg *LunarMessage) (*application.ProcessMessageDTO
 	return dto, nil
 }
 
-// contador global para generar números de mensaje únicos
+// Global counter to generate unique message numbers
 var (
 	messageCounter int64
 	counterMutex   sync.Mutex
 )
 
-// getNextMessageNumber genera el siguiente número de mensaje
+// getNextMessageNumber generates the next message number
 func getNextMessageNumber() int64 {
 	counterMutex.Lock()
 	defer counterMutex.Unlock()
@@ -135,17 +134,17 @@ func HandleMessages(pool *application.WorkerPool) http.HandlerFunc {
 			return
 		}
 
-		// Si el channel está vacío, generar uno automáticamente
+		// If channel is empty, generate one automatically
 		if dto.Channel == "" {
 			dto.Channel = fmt.Sprintf("rocket-%d", time.Now().UnixNano())
 		}
 
-		// Si el número de mensaje es inválido, generar uno automáticamente
+		// If message number is invalid, generate one automatically
 		if dto.Number <= 0 {
 			dto.Number = int(getNextMessageNumber())
 		}
 
-		// Si el time es inválido, usar el tiempo actual
+		// If time is invalid, use current time
 		if dto.Time <= 0 {
 			dto.Time = time.Now().UnixMilli()
 		}
@@ -164,7 +163,9 @@ func HandleMessages(pool *application.WorkerPool) http.HandlerFunc {
 
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusAccepted)
-		json.NewEncoder(w).Encode(map[string]string{"status": "queued"})
+		if err := json.NewEncoder(w).Encode(map[string]string{"status": "queued"}); err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+		}
 	}
 }
 
@@ -194,7 +195,9 @@ func HandleListRockets(service *application.RocketApplicationService) http.Handl
 				}
 
 				w.Header().Set("Content-Type", "application/json")
-				json.NewEncoder(w).Encode(events)
+				if err := json.NewEncoder(w).Encode(events); err != nil {
+					http.Error(w, err.Error(), http.StatusInternalServerError)
+				}
 				return
 			}
 
@@ -211,7 +214,9 @@ func HandleListRockets(service *application.RocketApplicationService) http.Handl
 			}
 
 			w.Header().Set("Content-Type", "application/json")
-			json.NewEncoder(w).Encode(rocket)
+			if err := json.NewEncoder(w).Encode(rocket); err != nil {
+				http.Error(w, err.Error(), http.StatusInternalServerError)
+			}
 			return
 		}
 
@@ -228,7 +233,9 @@ func HandleListRockets(service *application.RocketApplicationService) http.Handl
 		})
 
 		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(rockets)
+		if err := json.NewEncoder(w).Encode(rockets); err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+		}
 	}
 }
 
@@ -242,6 +249,8 @@ func HandleDebugBuffer(service *application.RocketApplicationService) http.Handl
 
 		buffer := service.GetBufferStatus()
 		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(buffer)
+		if err := json.NewEncoder(w).Encode(buffer); err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+		}
 	}
 }

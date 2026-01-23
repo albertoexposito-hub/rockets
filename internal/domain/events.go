@@ -66,7 +66,7 @@ func (e *RocketExploded) GetChannel() *Channel             { return e.Channel }
 func (e *RocketExploded) GetMessageNumber() *MessageNumber { return e.MessageNumber }
 func (e *RocketExploded) GetTimestamp() int64              { return e.Timestamp }
 
-// RocketMissionChanged evento cuando la misión cambia
+// RocketMissionChanged event when mission changes
 type RocketMissionChanged struct {
 	Channel       *Channel
 	MessageNumber *MessageNumber

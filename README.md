@@ -2,6 +2,25 @@
 
 An Event Sourcing backend for rocket state management built with Go. Implements Domain-Driven Design principles with automatic out-of-order message buffering and reordering.
 
+## ⚠️ Important Note: In-Memory Implementation
+
+**This implementation uses 100% in-memory storage. There is NO real database (not PostgreSQL), NO real Kafka, NO Redis.** Everything is simulated in RAM using Go maps and goroutines.
+
+### Current Limitations:
+- ❌ **NOT horizontally scalable** - Cannot run multiple instances (no shared state)
+- ❌ **NOT persistent** - All data lost on server restart
+- ❌ **Single-pod only** - Works perfectly for one process, breaks with multiple pods
+- ❌ **Memory growth** - Buffered messages stay in RAM indefinitely
+
+### Why This Approach:
+- ✅ Meets all challenge requirements
+- ✅ Zero external dependencies
+- ✅ Fast and simple
+- ✅ Perfect for learning/interviews
+
+### For Production:
+See **Scaling Considerations** section below for the PostgreSQL + Redis + Kafka architecture needed for real deployments.
+
 ## Features
 
 - ✅ **Event Sourcing**: All state changes are persisted as immutable events
@@ -9,7 +28,6 @@ An Event Sourcing backend for rocket state management built with Go. Implements 
 - ✅ **Worker Pool**: Configurable parallel message processing (default: 3 workers)
 - ✅ **Event Replay**: Complete state reconstruction from event history
 - ✅ **In-Memory Store**: Zero external dependencies required
-- ✅ **Official Format**: Fully compatible with the Lunar Challenge message structure
 
 ## Quick Start
 
@@ -339,8 +357,8 @@ go test -run TestProcessMessageOutOfOrder ./internal/application/
 **Comprehensive test coverage includes**:
 - ✅ Domain logic and business rules (rocket state transitions, validation)
 - ✅ Out-of-order message buffering and automatic reprocessing
-- ✅ Duplicate message detection and rejection (idempotency)
-- ✅ HTTP API endpoints (all routes with success and error cases)
+- ✅ Duplicate message detectionhttps://meet.google.com/nsz-qdvp-irt and rejection (idempotency)
+- ✅ HTTP API endpoints (all routes with success and error cases)https://meet.google.com/nsz-qdvp-irt
 - ✅ All message types (Launch, SpeedIncrease, SpeedDecrease, Explode, MissionChange)
 - ✅ Concurrent multi-rocket processing with worker pool
 
@@ -353,25 +371,78 @@ go test -run TestProcessMessageOutOfOrder ./internal/application/
 ### Current Implementation (In-Memory)
 - ✅ Perfect for single-process development and evaluation
 - ✅ Fast and simple to run
-- ❌ Not horizontally scalable (cannot run multiple instances)
-- ❌ No persistence (data lost on restart)
+- ❌ **NOT horizontally scalable** (cannot run multiple instances)
+- ❌ **NOT persistent** (data lost on restart)
+- ❌ **Buffered messages never expire** (memory grows unbounded)
 
 ### Production Multi-Pod Deployment Strategy
 
 To scale horizontally with multiple server instances:
 
 1. **Replace in-memory event store** → PostgreSQL with JSONB event payloads
-2. **Replace in-memory buffer** → Redis for shared message buffering
-3. **Add message queue** → Kafka for reliable message delivery
-4. **Implement distributed locking** → Redis locks per channel to prevent race conditions
-5. **Add database constraints** → Unique constraint on `(channel, messageNumber)` in PostgreSQL
-6. **Use Kafka partitioning** → Partition by channel to maintain ordering guarantees
+   - Append-only table: `events(id, channel, messageNumber, payload, timestamp)`
+   - Unique constraint: `(channel, messageNumber)`
+   - Enables durability and horizontal reads
 
-This architecture would support:
-- Horizontal scaling with load balancing
-- High availability with multiple replicas
-- Durable event storage
-- Exactly-once message processing semantics
+2. **Replace in-memory buffer** → Redis for shared message buffering
+   - Distributed cache: `pending_messages:{channel}:{msgNum}`
+   - Auto-expiration (TTL 1 hour) for lost messages
+   - Accessible from any pod
+
+3. **Add message queue** → Kafka for reliable message delivery
+   - Topic partitioned by channel (key=channel)
+   - Guarantees ordering per partition
+   - Consumer group per environment
+
+4. **Implement distributed locking** → Redis locks per channel
+   - Prevents concurrent processing of same channel
+   - Key: `lock:channel:xxx` with TTL
+
+5. **Add database constraints** → PostgreSQL enforcement
+   - Unique constraint on `(channel, messageNumber)` prevents duplicates
+   - Foreign key validation for data integrity
+
+6. **Use Kafka partitioning** → Partition by channel for ordering
+   - Same channel always routed to same partition
+   - Maintains global ordering per rocket
+
+### Production Architecture Diagram
+
+```
+┌─────────────────────────────────────────────────────────┐
+│                    Load Balancer                         │
+└──────────┬──────────┬──────────┬──────────┬──────────────┘
+           │          │          │          │
+       ┌───▼──┐   ┌───▼──┐   ┌───▼──┐   ┌───▼──┐
+       │Pod 1 │   │Pod 2 │   │Pod 3 │   │Pod N │ (Stateless)
+       └───┬──┘   └───┬──┘   └───┬──┘   └───┬──┘
+           │          │          │          │
+       ┌───▼──────────▼──────────▼──────────▼──────┐
+       │         Kafka Broker Cluster              │
+       │  (Partitioned by channel for ordering)    │
+       └───┬──────────────────────────────────────┘
+           │
+       ┌───▼─────────────────────┐
+       │   PostgreSQL Events     │
+       │  (Durable Event Store)  │
+       └───────────┬─────────────┘
+       ┌───────────▼─────────────┐
+       │   Redis Cache/Buffer    │
+       │  (Distributed locking)  │
+       └─────────────────────────┘
+```
+
+### Expected Production Improvements
+
+| Aspect | In-Memory | Production |
+|--------|-----------|------------|
+| **Scalability** | 1 pod only | N pods |
+| **Durability** | Lost on restart | Persisted in DB |
+| **Throughput** | ~1000 msg/s | ~10,000+ msg/s |
+| **Latency** | <1ms | ~5-10ms (with DB) |
+| **Availability** | 1 pod = no HA | N pods = high availability |
+| **Buffer expiration** | Never | 1 hour TTL |
+| **Cost** | Free (compute only) | $$$  (DB + cache + queue) |
 
 ---
 

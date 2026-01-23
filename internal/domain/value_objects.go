@@ -23,12 +23,12 @@ func (c *Channel) Value() string {
 	return c.value
 }
 
-// MessageNumber representa el número secuencial de un mensaje
+// MessageNumber represents the sequential number of a message
 type MessageNumber struct {
 	value int
 }
 
-// NewMessageNumber crea un nuevo número de mensaje
+// NewMessageNumber creates a new message number
 func NewMessageNumber(value int) (*MessageNumber, error) {
 	if value <= 0 {
 		return nil, fmt.Errorf("message number must be positive")
@@ -36,7 +36,7 @@ func NewMessageNumber(value int) (*MessageNumber, error) {
 	return &MessageNumber{value: value}, nil
 }
 
-// Value retorna el número
+// Value returns the number
 func (m *MessageNumber) Value() int {
 	return m.value
 }
@@ -72,7 +72,7 @@ func (s *Speed) Decrease(delta int) *Speed {
 	return &Speed{value: s.value - delta}
 }
 
-// Mission representa la misión del cohete
+// Mission represents the rocket's mission
 type Mission string
 
 const (
@@ -82,7 +82,7 @@ const (
 	MissionUnknown     Mission = "unknown"
 )
 
-// NewMission crea una nueva misión
+// NewMission creates a new mission
 func NewMission(value string) Mission {
 	m := Mission(strings.ToLower(value))
 	switch m {

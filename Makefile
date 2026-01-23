@@ -7,6 +7,8 @@ help:
 	@echo "  make build        - Compilar binario"
 	@echo "  make start        - Compilar y ejecutar binario"
 	@echo "  make test         - Ejecutar tests"
+	@echo "  make lint         - Ejecutar linter (golangci-lint)"
+	@echo "  make fmt          - Formatear código (gofmt + goimports)"
 	@echo "  make clean        - Limpiar binarios"
 	@echo ""
 	@echo "Variables:"
@@ -39,7 +41,19 @@ start: build
 test:
 	@echo "🧪 Running tests..."
 	go test -v ./...
-	go test -v ./internal/application
+
+.PHONY: lint
+lint:
+	@echo "🔍 Running linter..."
+	@which golangci-lint > /dev/null || (echo "❌ golangci-lint not installed. Install with: brew install golangci-lint" && exit 1)
+	golangci-lint run ./...
+
+.PHONY: fmt
+fmt:
+	@echo "✨ Formatting code..."
+	gofmt -w -s .
+	@which goimports > /dev/null && goimports -w . || echo "⚠️  goimports not found (optional)"
+	@echo "✅ Code formatted"
 
 .PHONY: test-integration
 .PHONY: clean
