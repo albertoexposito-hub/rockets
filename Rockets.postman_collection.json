@@ -214,6 +214,144 @@
           ]
         }
       }
+    },
+    {
+      "name": "GET Debug Buffer",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "http://localhost:8088/debug/buffer",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "8088",
+          "path": [
+            "debug",
+            "buffer"
+          ]
+        }
+      }
+    },
+    {
+      "name": "OUT OF ORDER - Send msg#3 (before msg#2)",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"metadata\": {\n    \"channel\": \"rocket-beta\",\n    \"messageNumber\": 3,\n    \"messageTime\": \"2022-02-02T20:00:03.86337+01:00\",\n    \"messageType\": \"RocketSpeedIncreased\"\n  },\n  \"message\": {\n    \"by\": 2000\n  }\n}"
+        },
+        "url": {
+          "raw": "http://localhost:8088/messages",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "8088",
+          "path": [
+            "messages"
+          ]
+        }
+      }
+    },
+    {
+      "name": "OUT OF ORDER - Send msg#1 Launch",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"metadata\": {\n    \"channel\": \"rocket-beta\",\n    \"messageNumber\": 1,\n    \"messageTime\": \"2022-02-02T20:00:01.86337+01:00\",\n    \"messageType\": \"RocketLaunched\"\n  },\n  \"message\": {\n    \"type\": \"Falcon-Heavy\",\n    \"launchSpeed\": 20000,\n    \"mission\": \"mars\"\n  }\n}"
+        },
+        "url": {
+          "raw": "http://localhost:8088/messages",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "8088",
+          "path": [
+            "messages"
+          ]
+        }
+      }
+    },
+    {
+      "name": "OUT OF ORDER - Send msg#2 (completes sequence)",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"metadata\": {\n    \"channel\": \"rocket-beta\",\n    \"messageNumber\": 2,\n    \"messageTime\": \"2022-02-02T20:00:02.86337+01:00\",\n    \"messageType\": \"RocketSpeedDecreased\"\n  },\n  \"message\": {\n    \"by\": 500\n  }\n}"
+        },
+        "url": {
+          "raw": "http://localhost:8088/messages",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "8088",
+          "path": [
+            "messages"
+          ]
+        }
+      }
+    },
+    {
+      "name": "OUT OF ORDER - Check buffer (should be empty now)",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "http://localhost:8088/debug/buffer",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "8088",
+          "path": [
+            "debug",
+            "buffer"
+          ]
+        }
+      }
+    },
+    {
+      "name": "GET rocket-beta status",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "http://localhost:8088/rockets/rocket-beta",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "8088",
+          "path": [
+            "rockets",
+            "rocket-beta"
+          ]
+        }
+      }
     }
   ]
 }

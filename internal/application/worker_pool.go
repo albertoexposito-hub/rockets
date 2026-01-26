@@ -3,7 +3,7 @@ package application
 import (
 	"context"
 	"fmt"
-	"log"
+	"log/slog"
 	"sync"
 )
 
@@ -34,11 +34,11 @@ func NewWorkerPool(service *RocketApplicationService, workerCount int) *WorkerPo
 // Start lanza los workers y registra logs de inicio.
 func (p *WorkerPool) Start(ctx context.Context) {
 	p.ctx = ctx
-	log.Printf("[debug] %d workers started", p.workerCount)
+	slog.Debug("Workers started", "count", p.workerCount)
 
 	// Simula bucle de reentrega (stub de vigilancia)
 	go func() {
-		log.Printf("[debug] Message redelivery loop started")
+		slog.Debug("Message redelivery loop started")
 		<-ctx.Done()
 	}()
 
@@ -46,26 +46,34 @@ func (p *WorkerPool) Start(ctx context.Context) {
 		p.wg.Add(1)
 		go func(id int) {
 			defer p.wg.Done()
-			log.Printf("[WORKER-%d] Started and waiting for jobs", id)
+			slog.Debug("Worker started and waiting for jobs", "worker_id", id)
 			for {
 				select {
 				case <-ctx.Done():
-					log.Printf("[WORKER-%d] Shutting down", id)
+					slog.Debug("Worker shutting down", "worker_id", id)
 					return
 				case job, ok := <-p.jobs:
 					if !ok {
-						log.Printf("[WORKER-%d] Channel closed", id)
+						slog.Debug("Job channel closed", "worker_id", id)
 						return
 					}
-					log.Printf("[WORKER-%d] ← Picked up job | Channel: %s | Msg#%d | Action: %s",
-						id, job.Channel, job.Number, job.Action)
+					slog.Debug("Picked up job",
+						"worker_id", id,
+						"channel", job.Channel,
+						"number", job.Number,
+						"action", job.Action)
 
 					if err := p.service.ProcessMessage(job); err != nil {
-						log.Printf("[WORKER-%d] ✗ Error processing | Channel: %s | Msg#%d | Error: %v",
-							id, job.Channel, job.Number, err)
+						slog.Error("Error processing message",
+							"worker_id", id,
+							"channel", job.Channel,
+							"number", job.Number,
+							"err", err)
 					} else {
-						log.Printf("[WORKER-%d] ✓ Successfully processed | Channel: %s | Msg#%d",
-							id, job.Channel, job.Number)
+						slog.Info("Message processed successfully",
+							"worker_id", id,
+							"channel", job.Channel,
+							"number", job.Number)
 					}
 				}
 			}

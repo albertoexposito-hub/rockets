@@ -3,7 +3,7 @@ package main
 import (
 	"context"
 	"encoding/json"
-	"log"
+	"log/slog"
 	"net/http"
 	"os"
 	"os/signal"
@@ -16,6 +16,11 @@ import (
 )
 
 func main() {
+	// Initialize structured logging with JSON handler
+	slog.SetDefault(slog.New(slog.NewJSONHandler(os.Stderr, &slog.HandlerOptions{
+		Level: slog.LevelInfo,
+	})))
+
 	// Initialize Kafka
 	kafkaEventStore := infrastructure.NewKafkaEventStore("localhost:9092")
 	// Initialize Redis
@@ -23,7 +28,7 @@ func main() {
 	// Initialize application service
 	rocketService := application.NewRocketApplicationService(redisRepository, kafkaEventStore)
 
-	// Configurar worker pool
+	// Configure worker pool
 	workerCount := 3
 	if value := os.Getenv("WORKER_COUNT"); value != "" {
 		if parsed, err := strconv.Atoi(value); err == nil && parsed > 0 {
@@ -35,7 +40,7 @@ func main() {
 	defer workerCancel()
 	workerPool.Start(workerCtx)
 
-	// Configurar manejadores HTTP
+	// Configure HTTP handlers
 	http.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		if err := json.NewEncoder(w).Encode(map[string]string{"status": "ok"}); err != nil {
@@ -43,13 +48,13 @@ func main() {
 		}
 	})
 	http.HandleFunc("/messages", api.HandleMessages(workerPool))
-	// Registrar rutas para listar y obtener por canal
+	// Register routes to list and get by channel
 	http.HandleFunc("/rockets", api.HandleListRockets(rocketService))
 	http.HandleFunc("/rockets/", api.HandleListRockets(rocketService))
-	// Debug endpoint para ver el estado del buffer
+	// Debug endpoint to see buffer state
 	http.HandleFunc("/debug/buffer", api.HandleDebugBuffer(rocketService))
 
-	// Iniciar servidor HTTP
+	// Start HTTP server
 	server := &http.Server{
 		Addr:         ":8088",
 		ReadTimeout:  15 * time.Second,
@@ -59,9 +64,10 @@ func main() {
 
 	// Iniciar en goroutine
 	go func() {
-		log.Printf("Server starting on %s", server.Addr)
+		slog.Info("Server starting", "addr", server.Addr)
 		if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-			log.Fatalf("Server error: %v", err)
+			slog.Error("Server error", "err", err)
+			os.Exit(1)
 		}
 	}()
 
@@ -75,12 +81,12 @@ func main() {
 	defer cancel()
 
 	if err := server.Shutdown(ctx); err != nil {
-		log.Printf("Server shutdown error: %v", err)
+		slog.Error("Server shutdown error", "err", err)
 	}
 
 	// Stop workers after shutting down server
 	workerCancel()
 	workerPool.Wait()
 
-	log.Println("Server stopped")
+	slog.Info("Server stopped")
 }

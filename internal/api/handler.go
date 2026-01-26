@@ -3,7 +3,7 @@ package api
 import (
 	"encoding/json"
 	"fmt"
-	"log"
+	"log/slog"
 	"net/http"
 	"sort"
 	"strings"
@@ -23,7 +23,7 @@ type LunarMessage struct {
 	Message map[string]interface{} `json:"message"`
 }
 
-// convertLunarMessageToDTO convierte el formato oficial al internal ProcessMessageDTO
+// from message to internal ProcessMessageDTO
 func convertLunarMessageToDTO(msg *LunarMessage) (*application.ProcessMessageDTO, error) {
 	// Parse messageTime (ISO8601) to Unix milliseconds
 	t, err := time.Parse(time.RFC3339Nano, msg.Metadata.MessageTime)
@@ -109,7 +109,7 @@ func getNextMessageNumber() int64 {
 	return messageCounter
 }
 
-// HandleMessages maneja las solicitudes POST /messages
+// HandleMessages  POST /messages
 func HandleMessages(pool *application.WorkerPool) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodPost {
@@ -117,17 +117,19 @@ func HandleMessages(pool *application.WorkerPool) http.HandlerFunc {
 			return
 		}
 
-		// Intentar parsear como formato oficial del challenge
+		// Try to parse as official challenge format
 		var lunarMsg LunarMessage
 		if err := json.NewDecoder(r.Body).Decode(&lunarMsg); err != nil {
 			http.Error(w, "Invalid request format", http.StatusBadRequest)
 			return
 		}
 
-		log.Printf("[HTTP] ← Received message | Channel: %s | Msg#%d | Type: %s",
-			lunarMsg.Metadata.Channel, lunarMsg.Metadata.MessageNumber, lunarMsg.Metadata.MessageType)
+		slog.Info("Received message",
+			"channel", lunarMsg.Metadata.Channel,
+			"number", lunarMsg.Metadata.MessageNumber,
+			"type", lunarMsg.Metadata.MessageType)
 
-		// Convertir al formato interno
+		// Convert to internal format
 		dto, err := convertLunarMessageToDTO(&lunarMsg)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusBadRequest)
@@ -140,26 +142,35 @@ func HandleMessages(pool *application.WorkerPool) http.HandlerFunc {
 		}
 
 		// If message number is invalid, generate one automatically
+		// (should not happen in official format)
+		// it can break ordering otherwise
 		if dto.Number <= 0 {
 			dto.Number = int(getNextMessageNumber())
 		}
 
 		// If time is invalid, use current time
+		// never in production, only for tests
 		if dto.Time <= 0 {
 			dto.Time = time.Now().UnixMilli()
 		}
 
-		log.Printf("[HTTP] → Enqueueing to worker pool | Channel: %s | Msg#%d | Action: %s",
-			dto.Channel, dto.Number, dto.Action)
+		slog.Debug("Enqueueing to worker pool",
+			"channel", dto.Channel,
+			"number", dto.Number,
+			"action", dto.Action)
 
 		if err := pool.Enqueue(dto); err != nil {
-			log.Printf("[HTTP] ✗ Failed to enqueue | Channel: %s | Msg#%d | Error: %v",
-				dto.Channel, dto.Number, err)
+			slog.Error("Failed to enqueue",
+				"channel", dto.Channel,
+				"number", dto.Number,
+				"err", err)
 			http.Error(w, err.Error(), http.StatusServiceUnavailable)
 			return
 		}
 
-		log.Printf("[HTTP] ✓ Message queued successfully | Channel: %s | Msg#%d", dto.Channel, dto.Number)
+		slog.Info("Message queued successfully",
+			"channel", dto.Channel,
+			"number", dto.Number)
 
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusAccepted)
@@ -169,7 +180,7 @@ func HandleMessages(pool *application.WorkerPool) http.HandlerFunc {
 	}
 }
 
-// HandleListRockets maneja las solicitudes GET /rockets
+// HandleListRockets  GET /rockets
 func HandleListRockets(service *application.RocketApplicationService) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodGet {
@@ -220,14 +231,14 @@ func HandleListRockets(service *application.RocketApplicationService) http.Handl
 			return
 		}
 
-		// Listar todos los cohetes
+		// List all rockets
 		rockets, err := service.ListRockets()
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
 
-		// Ordenar por canal
+		// Sort by channel
 		sort.Slice(rockets, func(i, j int) bool {
 			return rockets[i].Channel < rockets[j].Channel
 		})
@@ -239,7 +250,8 @@ func HandleListRockets(service *application.RocketApplicationService) http.Handl
 	}
 }
 
-// HandleDebugBuffer muestra los mensajes en el buffer
+// HandleDebugBuffer shows the messages in the buffer
+// not mandatory but good to have for debugging
 func HandleDebugBuffer(service *application.RocketApplicationService) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodGet {

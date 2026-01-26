@@ -2,7 +2,7 @@ package infrastructure
 
 import (
 	"fmt"
-	"log"
+	"log/slog"
 	"sync"
 
 	"rockets/internal/domain"
@@ -29,7 +29,7 @@ func NewRocketRepository(redisAddr string, eventStore *KafkaEventStore) *RocketR
 	}
 }
 
-// GetByChannel obtiene un cohete por canal
+// GetByChannel get a rocket by channel - FAKECONSUMER
 func (r *RocketRepository) GetByChannel(channel *domain.Channel) (*domain.Rocket, error) {
 	if channel == nil {
 		return nil, fmt.Errorf("channel cannot be nil")
@@ -61,25 +61,26 @@ func (r *RocketRepository) Save(rocket *domain.Rocket) error {
 		return fmt.Errorf("rocket cannot be nil")
 	}
 
-	log.Printf("[REPO] Saving rocket | Channel: %s | Events to persist: %d",
-		rocket.GetChannel().Value(), len(rocket.GetUncommittedEvents()))
+	slog.Debug("Saving rocket", "channel", rocket.GetChannel().Value(), "pending_events", len(rocket.GetUncommittedEvents()))
 
 	// Save to cache
 	r.cache.Store(rocket.GetChannel().Value(), rocket)
 
 	// Guardar eventos en el event store
 	for _, event := range rocket.GetUncommittedEvents() {
-		log.Printf("[REPO] Persisting event | Channel: %s | Type: %s | Msg#%d",
-			rocket.GetChannel().Value(), event.GetEventType(), event.GetMessageNumber().Value())
+		slog.Debug("Persisting event",
+			"channel", rocket.GetChannel().Value(),
+			"type", event.GetEventType(),
+			"message_number", event.GetMessageNumber().Value())
 		if err := r.eventStore.AppendEvent(event); err != nil {
-			log.Printf("[REPO] ✗ Failed to persist event | Channel: %s | Error: %v",
-				rocket.GetChannel().Value(), err)
+			slog.Error("Failed to persist event",
+				"channel", rocket.GetChannel().Value(),
+				"err", err)
 			return fmt.Errorf("failed to save event: %w", err)
 		}
 	}
 
-	log.Printf("[REPO] ✓ Rocket saved successfully | Channel: %s | Total events: %d",
-		rocket.GetChannel().Value(), len(rocket.GetUncommittedEvents()))
+	slog.Info("Rocket saved successfully", "channel", rocket.GetChannel().Value(), "total_events", len(rocket.GetUncommittedEvents()))
 
 	// Marcar eventos como guardados
 	rocket.MarkEventsAsCommitted()

@@ -1,7 +1,7 @@
 package infrastructure
 
 import (
-	"log"
+	"log/slog"
 	"sync"
 
 	"rockets/internal/domain"
@@ -10,7 +10,7 @@ import (
 // KafkaEventStore implements the event store using Kafka.
 // Note: for now real Kafka is disabled; we only simulate by storing in memory.
 type KafkaEventStore struct {
-	brokers string
+	brokers string //not used, it's only simulated
 	mu      sync.RWMutex
 	events  map[string][]domain.DomainEvent // cache ordered by insertion
 }
@@ -26,7 +26,7 @@ func NewKafkaEventStore(brokers string) *KafkaEventStore {
 // AppendEvent append un evento al log
 func (k *KafkaEventStore) AppendEvent(event domain.DomainEvent) error {
 	// Enviar a Kafka (simulado)
-	log.Printf("Event stored: %s for channel: %s", event.GetEventType(), event.GetChannel().Value())
+	slog.Debug("Event stored", "type", event.GetEventType(), "channel", event.GetChannel().Value())
 
 	// Save to in-memory cache (arrival order)
 	k.mu.Lock()

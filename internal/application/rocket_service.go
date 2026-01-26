@@ -2,7 +2,7 @@ package application
 
 import (
 	"fmt"
-	"log"
+	"log/slog"
 	"sync"
 
 	"rockets/internal/domain"
@@ -59,11 +59,11 @@ func (s *RocketApplicationService) ProcessMessage(dto *ProcessMessageDTO) error 
 
 	expected := rocket.GetLastMessageNumber().Value() + 1
 
-	log.Printf("[DEBUG] Channel: %s | Received msg#%d | Expected msg#%d", dto.Channel, dto.Number, expected)
+	slog.Debug("Message ordering check", "channel", dto.Channel, "received", dto.Number, "expected", expected)
 
 	// Si es el mensaje esperado, procesarlo
 	if dto.Number == expected {
-		log.Printf("[PROCESS] Channel: %s | Processing msg#%d (action: %s)", dto.Channel, dto.Number, dto.Action)
+		slog.Info("Processing message", "channel", dto.Channel, "number", dto.Number, "action", dto.Action)
 		if err := s.processMessageDirect(dto); err != nil {
 			return err
 		}
@@ -79,7 +79,7 @@ func (s *RocketApplicationService) ProcessMessage(dto *ProcessMessageDTO) error 
 				break
 			}
 
-			log.Printf("[BUFFER] Channel: %s | Processing buffered msg#%d (action: %s)", dto.Channel, nextNum, nextDTO.Action)
+			slog.Debug("Processing buffered message", "channel", dto.Channel, "number", nextNum, "action", nextDTO.Action)
 			if err := s.processMessageDirect(nextDTO); err != nil {
 				return err
 			}
@@ -96,13 +96,13 @@ func (s *RocketApplicationService) ProcessMessage(dto *ProcessMessageDTO) error 
 			s.pendingMessages[dto.Channel] = make(map[int]*ProcessMessageDTO)
 		}
 		s.pendingMessages[dto.Channel][dto.Number] = dto
-		log.Printf("[BUFFER] Channel: %s | Message #%d stored in buffer (waiting for #%d)", dto.Channel, dto.Number, expected)
-		log.Printf("[BUFFER] Channel: %s | Buffered messages: %v", dto.Channel, s.getBufferedMessageNumbers(dto.Channel))
+		slog.Debug("Message stored in buffer", "channel", dto.Channel, "number", dto.Number, "waiting_for", expected)
+		slog.Debug("Buffered messages", "channel", dto.Channel, "pending", s.getBufferedMessageNumbers(dto.Channel))
 		return nil // Not an error, just waiting
 	}
 
 	// Si es un mensaje viejo o duplicado, rechazar
-	log.Printf("[REJECT] Channel: %s | Message #%d rejected (already processed, expected #%d)", dto.Channel, dto.Number, expected)
+	slog.Warn("Message rejected - already processed", "channel", dto.Channel, "number", dto.Number, "expected", expected)
 	return fmt.Errorf("message %d already processed (expected %d)", dto.Number, expected)
 }
 

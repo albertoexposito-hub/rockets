@@ -2,7 +2,7 @@ package domain
 
 import (
 	"fmt"
-	"log"
+	"log/slog"
 )
 
 // Rocket is the aggregate root representing a rocket
@@ -48,8 +48,12 @@ func (r *Rocket) Launch(msgNum *MessageNumber, rocketType string, speed *Speed, 
 		Timestamp:     timestamp,
 	}
 
-	log.Printf("[DOMAIN] Applying RocketLaunched | Channel: %s | Msg#%d | Type: %s | Speed: %d | Mission: %s",
-		r.channel.Value(), msgNum.Value(), rocketType, speed.Value(), mission)
+	slog.Info("Applying RocketLaunched",
+		"channel", r.channel.Value(),
+		"message_number", msgNum.Value(),
+		"rocket_type", rocketType,
+		"speed", speed.Value(),
+		"mission", mission)
 
 	r.applyEvent(event)
 	r.uncommittedEvents = append(r.uncommittedEvents, event)
@@ -77,8 +81,12 @@ func (r *Rocket) IncreaseSpeed(msgNum *MessageNumber, delta int, timestamp int64
 		Timestamp:     timestamp,
 	}
 
-	log.Printf("[DOMAIN] Applying SpeedIncreased | Channel: %s | Msg#%d | %d → %d (+%d)",
-		r.channel.Value(), msgNum.Value(), r.speed.Value(), newSpeed.Value(), delta)
+	slog.Info("Applying SpeedIncreased",
+		"channel", r.channel.Value(),
+		"message_number", msgNum.Value(),
+		"before", r.speed.Value(),
+		"after", newSpeed.Value(),
+		"increment", delta)
 
 	r.applyEvent(event)
 	r.uncommittedEvents = append(r.uncommittedEvents, event)
@@ -106,8 +114,12 @@ func (r *Rocket) DecreaseSpeed(msgNum *MessageNumber, delta int, timestamp int64
 		Timestamp:     timestamp,
 	}
 
-	log.Printf("[DOMAIN] Applying SpeedDecreased | Channel: %s | Msg#%d | %d → %d (-%d)",
-		r.channel.Value(), msgNum.Value(), r.speed.Value(), newSpeed.Value(), delta)
+	slog.Info("Applying SpeedDecreased",
+		"channel", r.channel.Value(),
+		"message_number", msgNum.Value(),
+		"before", r.speed.Value(),
+		"after", newSpeed.Value(),
+		"decrement", delta)
 
 	r.applyEvent(event)
 	r.uncommittedEvents = append(r.uncommittedEvents, event)
