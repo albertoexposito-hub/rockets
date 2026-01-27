@@ -16,7 +16,7 @@ type Rocket struct {
 	uncommittedEvents []DomainEvent
 }
 
-// NewRocket crea un nuevo cohete
+// NewRocket creates a new Rocket instance
 func NewRocket(channel *Channel) *Rocket {
 	return &Rocket{
 		channel:           channel,
@@ -29,7 +29,7 @@ func NewRocket(channel *Channel) *Rocket {
 	}
 }
 
-// Launch lanza el cohete
+// Launch launches the rocket
 func (r *Rocket) Launch(msgNum *MessageNumber, rocketType string, speed *Speed, mission Mission, timestamp int64) error {
 	if r.status != StatusLaunched {
 		return fmt.Errorf("rocket already launched")
@@ -60,7 +60,7 @@ func (r *Rocket) Launch(msgNum *MessageNumber, rocketType string, speed *Speed, 
 	return nil
 }
 
-// IncreaseSpeed incrementa la velocidad
+// IncreaseSpeed increases the rocket's speed
 func (r *Rocket) IncreaseSpeed(msgNum *MessageNumber, delta int, timestamp int64) error {
 	if r.status == StatusExploded {
 		return fmt.Errorf("cannot change crashed rocket")
@@ -93,7 +93,7 @@ func (r *Rocket) IncreaseSpeed(msgNum *MessageNumber, delta int, timestamp int64
 	return nil
 }
 
-// DecreaseSpeed disminuye la velocidad
+// DecreaseSpeed decreases the rocket's speed
 func (r *Rocket) DecreaseSpeed(msgNum *MessageNumber, delta int, timestamp int64) error {
 	if r.status == StatusExploded {
 		return fmt.Errorf("cannot change crashed rocket")
@@ -126,7 +126,7 @@ func (r *Rocket) DecreaseSpeed(msgNum *MessageNumber, delta int, timestamp int64
 	return nil
 }
 
-// Explode marca el cohete como explotado
+// Explode explodes the rocket
 func (r *Rocket) Explode(msgNum *MessageNumber, reason string, timestamp int64) error {
 	if r.status == StatusExploded {
 		return fmt.Errorf("rocket already exploded")
@@ -148,7 +148,7 @@ func (r *Rocket) Explode(msgNum *MessageNumber, reason string, timestamp int64) 
 	return nil
 }
 
-// ChangeMission changes the mission
+// ChangeMission changes the rocket's mission
 func (r *Rocket) ChangeMission(msgNum *MessageNumber, newMission Mission, timestamp int64) error {
 	if r.status == StatusExploded {
 		return fmt.Errorf("cannot change crashed rocket")
@@ -171,17 +171,17 @@ func (r *Rocket) ChangeMission(msgNum *MessageNumber, newMission Mission, timest
 	return nil
 }
 
-// GetUncommittedEvents retorna los eventos no persistidos
+// GetUncommittedEvents returns the uncommitted events
 func (r *Rocket) GetUncommittedEvents() []DomainEvent {
 	return r.uncommittedEvents
 }
 
-// MarkEventsAsCommitted limpia los eventos no persistidos
+// MarkEventsAsCommitted marks events as committed
 func (r *Rocket) MarkEventsAsCommitted() {
 	r.uncommittedEvents = []DomainEvent{}
 }
 
-// LoadFromHistory reconstruye el estado desde el historial de eventos
+// LoadFromHistory reconstructs the state from the event history
 func (r *Rocket) LoadFromHistory(events []DomainEvent) error {
 	for _, event := range events {
 		r.applyEvent(event)
@@ -189,7 +189,7 @@ func (r *Rocket) LoadFromHistory(events []DomainEvent) error {
 	return nil
 }
 
-// applyEvent aplica un evento al estado interno
+// applyEvent applies an event to the internal state
 func (r *Rocket) applyEvent(event DomainEvent) {
 	switch e := event.(type) {
 	case *RocketLaunched:
@@ -217,17 +217,17 @@ func (r *Rocket) applyEvent(event DomainEvent) {
 	}
 }
 
-// GetChannel retorna el canal del cohete
+// GetChannel returns the rocket's channel
 func (r *Rocket) GetChannel() *Channel {
 	return r.channel
 }
 
-// GetStatus retorna el estado del cohete
+// GetStatus returns the rocket's status
 func (r *Rocket) GetStatus() RocketStatus {
 	return r.status
 }
 
-// GetSpeed retorna la velocidad del cohete
+// GetSpeed returns the rocket's speed
 func (r *Rocket) GetSpeed() *Speed {
 	return r.speed
 }
@@ -237,7 +237,7 @@ func (r *Rocket) GetMission() Mission {
 	return r.mission
 }
 
-// GetRocketType retorna el tipo de cohete
+// GetRocketType returns the rocket's type
 func (r *Rocket) GetRocketType() string {
 	return r.rocketType
 }

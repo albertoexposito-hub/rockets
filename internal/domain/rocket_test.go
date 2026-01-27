@@ -4,8 +4,8 @@ import (
 	"testing"
 )
 
-// TestRocketLaunch verifica que un cohete se lance correctamente con sus propiedades iniciales.
-// Resultado esperado: status=flying, speed=15000, mission=exploration, type=Falcon-9.
+// TestRocketLaunch verifies that a rocket launches correctly with its initial properties.
+// Expected result: status=flying, speed=15000, mission=exploration, type=Falcon-9.
 func TestRocketLaunch(t *testing.T) {
 	// Arrange
 	channel, _ := NewChannel("rocket-1")
@@ -35,8 +35,8 @@ func TestRocketLaunch(t *testing.T) {
 	}
 }
 
-// TestRocketCannotLaunchTwice verifica que un cohete no pueda ser lanzado dos veces.
-// Resultado esperado: primer lanzamiento OK, segundo lanzamiento retorna error.
+// TestRocketCannotLaunchTwice verifies that a rocket cannot be launched twice.
+// Expected result: first launch OK, second launch returns error.
 func TestRocketCannotLaunchTwice(t *testing.T) {
 	// Arrange
 	channel, _ := NewChannel("rocket-1")
@@ -59,8 +59,8 @@ func TestRocketCannotLaunchTwice(t *testing.T) {
 	}
 }
 
-// TestRocketIncreaseSpeed verifica que la velocidad del cohete se incremente correctamente.
-// Resultado esperado: velocidad inicial 15000 + incremento 5000 = 20000.
+// TestRocketIncreaseSpeed verifies that the rocket's speed increases correctly.
+// Expected result: initial speed 15000 + increase 5000 = 20000.
 func TestRocketIncreaseSpeed(t *testing.T) {
 	// Arrange
 	channel, _ := NewChannel("rocket-1")
@@ -86,8 +86,8 @@ func TestRocketIncreaseSpeed(t *testing.T) {
 	}
 }
 
-// TestRocketDecreaseSpeed verifica que la velocidad del cohete se decremente correctamente.
-// Resultado esperado: velocidad inicial 15000 - decremento 3000 = 12000.
+// TestRocketDecreaseSpeed verifies that the rocket's speed decreases correctly.
+// Expected result: initial speed 15000 - decrease 3000 = 12000.
 func TestRocketDecreaseSpeed(t *testing.T) {
 	// Arrange
 	channel, _ := NewChannel("rocket-1")
@@ -113,8 +113,8 @@ func TestRocketDecreaseSpeed(t *testing.T) {
 	}
 }
 
-// TestRocketExplode verifica que un cohete pueda explotar y cambiar su estado.
-// Resultado esperado: status cambia de flying a exploded.
+// TestRocketExplode verifies that a rocket can explode and change its status.
+// Expected result: status changes from flying to exploded.
 func TestRocketExplode(t *testing.T) {
 	// Arrange
 	channel, _ := NewChannel("rocket-1")
@@ -140,7 +140,7 @@ func TestRocketExplode(t *testing.T) {
 	}
 }
 
-// TestRocketCannotChangeAfterExplosion verifica que un cohete explotado no pueda ser modificado.
+// TestRocketCannotChangeAfterExplosion verifies that an exploded rocket cannot be modified.
 // Expected result: trying to increase speed after exploding returns error.
 func TestRocketCannotChangeAfterExplosion(t *testing.T) {
 	// Arrange
@@ -168,9 +168,9 @@ func TestRocketCannotChangeAfterExplosion(t *testing.T) {
 	}
 }
 
-// TestRocketLoadFromHistory verifica que un cohete se pueda reconstruir desde eventos históricos.
-// Carga 2 eventos: RocketLaunched (15000) y RocketSpeedIncreased (+5000).
-// Resultado esperado: velocidad final 20000, último mensaje #2 (event sourcing replay).
+// TestRocketLoadFromHistory verifies that a rocket can be reconstructed from historical events.
+// Loads 2 events: RocketLaunched (15000) and RocketSpeedIncreased (+5000).
+// Expected result: final speed 20000, last message #2 (event sourcing replay).
 func TestRocketLoadFromHistory(t *testing.T) {
 	// Arrange
 	channel, _ := NewChannel("rocket-1")

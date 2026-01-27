@@ -8,13 +8,13 @@ import (
 	"rockets/internal/domain"
 )
 
-// RocketApplicationService implementa los casos de uso
+// RocketApplicationService is the application service for rockets
 type RocketApplicationService struct {
 	repository domain.RocketRepository
 	eventStore domain.EventStore
-	// Buffer para mensajes fuera de orden
+	// Buffer for out-of-order messages -> ordering by messageNumber per channel
 	pendingMessages map[string]map[int]*ProcessMessageDTO
-	bufferMutex     sync.Mutex
+	bufferMutex     sync.Mutex // Mutex to protect access to pendingMessages map
 }
 
 // NewRocketApplicationService creates a new application service
@@ -26,7 +26,7 @@ func NewRocketApplicationService(repository domain.RocketRepository, eventStore 
 	}
 }
 
-// ProcessMessageDTO representa un mensaje entrante
+// ProcessMessageDTO represents an incoming message
 type ProcessMessageDTO struct {
 	Channel    string `json:"channel"`
 	Number     int    `json:"number"`
@@ -37,7 +37,7 @@ type ProcessMessageDTO struct {
 	RocketType string `json:"rocketType,omitempty"`
 }
 
-// ProcessMessage procesa un mensaje y actualiza el cohete con reordenamiento
+// ProcessMessage process a message with ordering guarantees
 func (s *RocketApplicationService) ProcessMessage(dto *ProcessMessageDTO) error {
 	if dto == nil {
 		return fmt.Errorf("message DTO cannot be nil")
@@ -61,14 +61,14 @@ func (s *RocketApplicationService) ProcessMessage(dto *ProcessMessageDTO) error 
 
 	slog.Debug("Message ordering check", "channel", dto.Channel, "received", dto.Number, "expected", expected)
 
-	// Si es el mensaje esperado, procesarlo
+	// If it is the expected message, process it
 	if dto.Number == expected {
 		slog.Info("Processing message", "channel", dto.Channel, "number", dto.Number, "action", dto.Action)
 		if err := s.processMessageDirect(dto); err != nil {
 			return err
 		}
 
-		// Procesar mensajes consecutivos del buffer
+		// Process consecutive messages from the buffer
 		for {
 			nextNum := expected + 1
 			if s.pendingMessages[dto.Channel] == nil {
@@ -90,7 +90,7 @@ func (s *RocketApplicationService) ProcessMessage(dto *ProcessMessageDTO) error 
 		return nil
 	}
 
-	// Si es un mensaje futuro, guardarlo en el buffer
+	// If it is a future message, store it in the buffer
 	if dto.Number > expected {
 		if s.pendingMessages[dto.Channel] == nil {
 			s.pendingMessages[dto.Channel] = make(map[int]*ProcessMessageDTO)
@@ -101,18 +101,18 @@ func (s *RocketApplicationService) ProcessMessage(dto *ProcessMessageDTO) error 
 		return nil // Not an error, just waiting
 	}
 
-	// Si es un mensaje viejo o duplicado, rechazar
+	// If it is an old or duplicate message, reject
 	slog.Warn("Message rejected - already processed", "channel", dto.Channel, "number", dto.Number, "expected", expected)
 	return fmt.Errorf("message %d already processed (expected %d)", dto.Number, expected)
 }
 
-// processMessageDirect procesa un mensaje directamente (sin buffer)
+// processMessageDirect processes a message directly (without buffer)
 func (s *RocketApplicationService) processMessageDirect(dto *ProcessMessageDTO) error {
 	if dto == nil {
 		return fmt.Errorf("message DTO cannot be nil")
 	}
 
-	// Validar y crear value objects
+	// Validate and create value objects
 	channel, err := domain.NewChannel(dto.Channel)
 	if err != nil {
 		return fmt.Errorf("invalid channel: %w", err)
@@ -123,7 +123,7 @@ func (s *RocketApplicationService) processMessageDirect(dto *ProcessMessageDTO) 
 		return fmt.Errorf("invalid message number: %w", err)
 	}
 
-	// Obtener o crear cohete
+	// Get or create rocket
 	rocket, err := s.repository.GetByChannel(channel)
 	if err != nil {
 		return fmt.Errorf("failed to get rocket: %w", err)
@@ -183,7 +183,7 @@ func (s *RocketApplicationService) getBufferedMessageNumbers(channel string) []i
 	return numbers
 }
 
-// RocketDTO representa el estado de un cohete
+// RocketDTO represents a rocket to be exposed via API
 type RocketDTO struct {
 	Channel string `json:"channel"`
 	Type    string `json:"type"`
@@ -192,7 +192,7 @@ type RocketDTO struct {
 	Mission string `json:"mission"`
 }
 
-// EventDTO representa un evento para exponer por API
+// EventDTO represents an event to be exposed via API
 type EventDTO struct {
 	Type          string `json:"type"`
 	MessageNumber int    `json:"messageNumber"`
@@ -200,7 +200,7 @@ type EventDTO struct {
 	Details       string `json:"details,omitempty"`
 }
 
-// GetRocket obtiene el estado actual de un cohete
+// GetRocket gets the current state of a rocket
 func (s *RocketApplicationService) GetRocket(channelStr string) (*RocketDTO, error) {
 	channel, err := domain.NewChannel(channelStr)
 	if err != nil {
@@ -221,7 +221,7 @@ func (s *RocketApplicationService) GetRocket(channelStr string) (*RocketDTO, err
 	}, nil
 }
 
-// ListRockets obtiene todos los cohetes
+// ListRockets gets all rockets
 func (s *RocketApplicationService) ListRockets() ([]*RocketDTO, error) {
 	rockets, err := s.repository.GetAll()
 	if err != nil {
@@ -242,7 +242,7 @@ func (s *RocketApplicationService) ListRockets() ([]*RocketDTO, error) {
 	return dtos, nil
 }
 
-// ListEvents obtiene los eventos de un canal (ordenados por llegada en el store)
+// ListEvents gets the events of a channel (ordered by arrival in the store)
 func (s *RocketApplicationService) ListEvents(channelStr string) ([]*EventDTO, error) {
 	channel, err := domain.NewChannel(channelStr)
 	if err != nil {
@@ -279,14 +279,14 @@ func (s *RocketApplicationService) ListEvents(channelStr string) ([]*EventDTO, e
 	return dtos, nil
 }
 
-// BufferStatusDTO representa el estado del buffer para debug
+// BufferStatusDTO represents the buffer status for debugging
 type BufferStatusDTO struct {
 	Channel          string `json:"channel"`
 	ExpectedNext     int    `json:"expectedNext"`
 	BufferedMessages []int  `json:"bufferedMessages"`
 }
 
-// GetBufferStatus devuelve el estado del buffer para todas las channels
+// GetBufferStatus returns the buffer status for all channels
 func (s *RocketApplicationService) GetBufferStatus() []*BufferStatusDTO {
 	s.bufferMutex.Lock()
 	defer s.bufferMutex.Unlock()

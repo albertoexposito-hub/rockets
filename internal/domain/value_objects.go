@@ -5,12 +5,12 @@ import (
 	"strings"
 )
 
-// Channel representa el canal o identificador de un cohete
+// Channel represents a communication channel for a rocket
 type Channel struct {
 	value string
 }
 
-// NewChannel crea un nuevo canal
+// NewChannel creates a new channel
 func NewChannel(value string) (*Channel, error) {
 	if strings.TrimSpace(value) == "" {
 		return nil, fmt.Errorf("channel cannot be empty")
@@ -18,7 +18,7 @@ func NewChannel(value string) (*Channel, error) {
 	return &Channel{value: value}, nil
 }
 
-// Value retorna el valor del canal
+// Value returns the channel's value
 func (c *Channel) Value() string {
 	return c.value
 }
@@ -41,12 +41,12 @@ func (m *MessageNumber) Value() int {
 	return m.value
 }
 
-// Speed representa la velocidad de un cohete
+// Speed represents the speed of a rocket
 type Speed struct {
-	value int // en km/h
+	value int // in km/h
 }
 
-// NewSpeed crea una nueva velocidad
+// NewSpeed creates a new speed
 func NewSpeed(value int) (*Speed, error) {
 	if value < 0 {
 		return nil, fmt.Errorf("speed cannot be negative")
@@ -54,17 +54,17 @@ func NewSpeed(value int) (*Speed, error) {
 	return &Speed{value: value}, nil
 }
 
-// Value retorna la velocidad
+// Value returns the speed
 func (s *Speed) Value() int {
 	return s.value
 }
 
-// Increase incrementa la velocidad
+// Increase increases the speed
 func (s *Speed) Increase(delta int) *Speed {
 	return &Speed{value: s.value + delta}
 }
 
-// Decrease disminuye la velocidad
+// Decrease decreases the speed
 func (s *Speed) Decrease(delta int) *Speed {
 	if delta >= s.value {
 		return &Speed{value: 0}
@@ -93,12 +93,12 @@ func NewMission(value string) Mission {
 	}
 }
 
-// MessageTime representa el tiempo de un mensaje
+// MessageTime represents the time of a message
 type MessageTime struct {
 	value int64 // Unix timestamp in milliseconds
 }
 
-// NewMessageTime crea un nuevo tiempo de mensaje
+// NewMessageTime creates a new message time
 func NewMessageTime(value int64) (*MessageTime, error) {
 	if value <= 0 {
 		return nil, fmt.Errorf("message time must be positive")
@@ -106,12 +106,12 @@ func NewMessageTime(value int64) (*MessageTime, error) {
 	return &MessageTime{value: value}, nil
 }
 
-// Value retorna el timestamp
+// Value returns the timestamp
 func (m *MessageTime) Value() int64 {
 	return m.value
 }
 
-// RocketStatus enumera los posibles estados de un cohete
+// RocketStatus enumerates the possible states of a rocket
 type RocketStatus string
 
 const (

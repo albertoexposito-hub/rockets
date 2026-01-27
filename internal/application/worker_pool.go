@@ -7,16 +7,16 @@ import (
 	"sync"
 )
 
-// WorkerPool procesa mensajes en paralelo usando una cola interna.
+// WorkerPool process messages concurrently with a fixed number of workers.
 type WorkerPool struct {
 	service     *RocketApplicationService
 	jobs        chan *ProcessMessageDTO
 	wg          sync.WaitGroup
 	workerCount int
-	ctx         context.Context
+	ctx         context.Context // Context to manage shutdown
 }
 
-// NewWorkerPool crea un pool con un numero de workers fijo.
+// NewWorkerPool creates a pool with a fixed number of workers.
 func NewWorkerPool(service *RocketApplicationService, workerCount int) *WorkerPool {
 	if service == nil {
 		panic("service cannot be nil")
@@ -31,28 +31,30 @@ func NewWorkerPool(service *RocketApplicationService, workerCount int) *WorkerPo
 	}
 }
 
-// Start lanza los workers y registra logs de inicio.
+// Start launches the workers and logs their start.
 func (p *WorkerPool) Start(ctx context.Context) {
 	p.ctx = ctx
 	slog.Debug("Workers started", "count", p.workerCount)
 
-	// Simula bucle de reentrega (stub de vigilancia)
+	// Simulate redelivery loop (watchdog stub)
 	go func() {
 		slog.Debug("Message redelivery loop started")
 		<-ctx.Done()
 	}()
 
+	// Start workers
 	for i := 1; i <= p.workerCount; i++ {
+		// Launch worker goroutine
 		p.wg.Add(1)
 		go func(id int) {
 			defer p.wg.Done()
 			slog.Debug("Worker started and waiting for jobs", "worker_id", id)
 			for {
 				select {
-				case <-ctx.Done():
+				case <-ctx.Done(): // Shutdown signal
 					slog.Debug("Worker shutting down", "worker_id", id)
 					return
-				case job, ok := <-p.jobs:
+				case job, ok := <-p.jobs: // Receive job
 					if !ok {
 						slog.Debug("Job channel closed", "worker_id", id)
 						return
@@ -81,7 +83,7 @@ func (p *WorkerPool) Start(ctx context.Context) {
 	}
 }
 
-// Enqueue agrega un mensaje a la cola.
+// Enqueue adds a message to the queue.
 func (p *WorkerPool) Enqueue(dto *ProcessMessageDTO) error {
 	if dto == nil {
 		return fmt.Errorf("message DTO cannot be nil")
@@ -101,7 +103,8 @@ func (p *WorkerPool) Enqueue(dto *ProcessMessageDTO) error {
 	}
 }
 
-// Wait espera a que todos los workers terminen.
+// Wait waits for all workers to finish.
+// This should be called after cancelling the context to ensure graceful shutdown.
 func (p *WorkerPool) Wait() {
 	p.wg.Wait()
 }

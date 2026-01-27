@@ -10,7 +10,7 @@ import (
 	"github.com/redis/go-redis/v9"
 )
 
-// RocketRepository implementa el repositorio de cohetes
+// RocketRepository implements the RocketRepository using Redis and KafkaEventStore SIMULATION
 type RocketRepository struct {
 	redisAddr   string
 	redisClient *redis.Client
@@ -18,7 +18,7 @@ type RocketRepository struct {
 	cache       sync.Map
 }
 
-// NewRocketRepository crea un nuevo repositorio
+// NewRocketRepository creates a new RocketRepository
 func NewRocketRepository(redisAddr string, eventStore *KafkaEventStore) *RocketRepository {
 	return &RocketRepository{
 		redisAddr: redisAddr,
@@ -40,10 +40,10 @@ func (r *RocketRepository) GetByChannel(channel *domain.Channel) (*domain.Rocket
 		return cached.(*domain.Rocket), nil
 	}
 
-	// Crear nuevo cohete si no existe
+	// Create new rocket if it doesn't exist
 	rocket := domain.NewRocket(channel)
 
-	// Hacer replay desde el event store (stub en memoria)
+	// Replay from the event store (in-memory stub)
 	events, err := r.eventStore.GetEventsByChannel(channel)
 	if err == nil && len(events) > 0 {
 		_ = rocket.LoadFromHistory(events)
@@ -66,7 +66,7 @@ func (r *RocketRepository) Save(rocket *domain.Rocket) error {
 	// Save to cache
 	r.cache.Store(rocket.GetChannel().Value(), rocket)
 
-	// Guardar eventos en el event store
+	// Save events to the event store
 	for _, event := range rocket.GetUncommittedEvents() {
 		slog.Debug("Persisting event",
 			"channel", rocket.GetChannel().Value(),
@@ -82,15 +82,15 @@ func (r *RocketRepository) Save(rocket *domain.Rocket) error {
 
 	slog.Info("Rocket saved successfully", "channel", rocket.GetChannel().Value(), "total_events", len(rocket.GetUncommittedEvents()))
 
-	// Marcar eventos como guardados
+	// Mark events as committed
 	rocket.MarkEventsAsCommitted()
 
 	return nil
 }
 
-// GetAll obtiene todos los cohetes (reconstruidos desde el event store)
+// GetAll gets all rockets (reconstructed from the event store)
 func (r *RocketRepository) GetAll() ([]*domain.Rocket, error) {
-	// Obtener todos los canales del event store
+	// Get all channels from the event store
 	channels := r.eventStore.GetAllChannels()
 
 	var rockets []*domain.Rocket
