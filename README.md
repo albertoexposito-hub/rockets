@@ -33,7 +33,7 @@ See **Scaling Considerations** section below for the PostgreSQL + Redis + Kafka 
 
 ### Prerequisites
 
-- Go 1.21+
+- Go 1.25
 
 ### Run Server
 

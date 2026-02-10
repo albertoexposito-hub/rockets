@@ -1,6 +1,6 @@
 package domain
 
-// DomainEvent es la interfaz base para todos los eventos del dominio
+// DomainEvent is the interface for all domain events
 type DomainEvent interface {
 	GetEventType() string
 	GetChannel() *Channel
@@ -8,7 +8,7 @@ type DomainEvent interface {
 	GetTimestamp() int64
 }
 
-// RocketLaunched evento cuando un cohete es lanzado
+// RocketLaunched event when a rocket is launched
 type RocketLaunched struct {
 	Channel       *Channel
 	MessageNumber *MessageNumber
@@ -23,7 +23,7 @@ func (e *RocketLaunched) GetChannel() *Channel             { return e.Channel }
 func (e *RocketLaunched) GetMessageNumber() *MessageNumber { return e.MessageNumber }
 func (e *RocketLaunched) GetTimestamp() int64              { return e.Timestamp }
 
-// RocketSpeedIncreased evento cuando la velocidad aumenta
+// RocketSpeedIncreased event when speed increases
 type RocketSpeedIncreased struct {
 	Channel       *Channel
 	MessageNumber *MessageNumber
@@ -38,7 +38,7 @@ func (e *RocketSpeedIncreased) GetChannel() *Channel             { return e.Chan
 func (e *RocketSpeedIncreased) GetMessageNumber() *MessageNumber { return e.MessageNumber }
 func (e *RocketSpeedIncreased) GetTimestamp() int64              { return e.Timestamp }
 
-// RocketSpeedDecreased evento cuando la velocidad disminuye
+// RocketSpeedDecreased event when speed decreases
 type RocketSpeedDecreased struct {
 	Channel       *Channel
 	MessageNumber *MessageNumber
@@ -53,7 +53,7 @@ func (e *RocketSpeedDecreased) GetChannel() *Channel             { return e.Chan
 func (e *RocketSpeedDecreased) GetMessageNumber() *MessageNumber { return e.MessageNumber }
 func (e *RocketSpeedDecreased) GetTimestamp() int64              { return e.Timestamp }
 
-// RocketExploded evento cuando un cohete explota
+// RocketExploded event when rocket explodes
 type RocketExploded struct {
 	Channel       *Channel
 	MessageNumber *MessageNumber
