@@ -6,25 +6,17 @@ import (
 	"sync"
 
 	"rockets/internal/domain"
-
-	"github.com/redis/go-redis/v9"
 )
 
-// RocketRepository implements the RocketRepository using Redis and KafkaEventStore SIMULATION
+// RocketRepository implements the RocketRepository using in-memory cache and KafkaEventStore simulation
 type RocketRepository struct {
-	redisAddr   string
-	redisClient *redis.Client
-	eventStore  *KafkaEventStore
-	cache       sync.Map
+	eventStore *KafkaEventStore
+	cache      sync.Map
 }
 
 // NewRocketRepository creates a new RocketRepository
-func NewRocketRepository(redisAddr string, eventStore *KafkaEventStore) *RocketRepository {
+func NewRocketRepository(eventStore *KafkaEventStore) *RocketRepository {
 	return &RocketRepository{
-		redisAddr: redisAddr,
-		redisClient: redis.NewClient(&redis.Options{
-			Addr: redisAddr,
-		}),
 		eventStore: eventStore,
 	}
 }

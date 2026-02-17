@@ -23,10 +23,10 @@ func main() {
 
 	// Initialize Kafka
 	kafkaEventStore := infrastructure.NewKafkaEventStore("localhost:9092")
-	// Initialize Redis
-	redisRepository := infrastructure.NewRocketRepository("localhost:6379", kafkaEventStore)
+	// Initialize repository (in-memory)
+	repository := infrastructure.NewRocketRepository(kafkaEventStore)
 	// Initialize application service
-	rocketService := application.NewRocketApplicationService(redisRepository, kafkaEventStore)
+	rocketService := application.NewRocketApplicationService(repository, kafkaEventStore)
 
 	// Configure worker pool
 	workerCount := 3
