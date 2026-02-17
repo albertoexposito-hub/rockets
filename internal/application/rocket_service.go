@@ -167,7 +167,7 @@ func (s *RocketApplicationService) processMessageDirect(dto *ProcessMessageDTO) 
 		return fmt.Errorf("unknown action: %s", dto.Action)
 	}
 
-	// Guardar cambios
+	// Save changes
 	return s.repository.Save(rocket)
 }
 

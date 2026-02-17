@@ -12,8 +12,8 @@ func setupTestService() *RocketApplicationService {
 	return NewRocketApplicationService(repository, eventStore)
 }
 
-// TestProcessMessageInOrder verifica que los mensajes en orden correcto se procesen sin errores.
-// Resultado esperado: mensaje #1 lanza el cohete, mensaje #2 incrementa velocidad a 20000.
+// TestProcessMessageInOrder verifies that in-order messages are processed without errors.
+// Expected result: message #1 launches the rocket, message #2 increases speed to 20000.
 func TestProcessMessageInOrder(t *testing.T) {
 	// Arrange
 	service := setupTestService()
@@ -55,9 +55,9 @@ func TestProcessMessageInOrder(t *testing.T) {
 	}
 }
 
-// TestProcessMessageOutOfOrder verifica que los mensajes fuera de orden se buffereen y procesen correctamente.
+// TestProcessMessageOutOfOrder verifies that out-of-order messages are buffered and processed correctly.
 // Send: msg#1, msg#3, msg#2 (out of order)
-// Resultado esperado: msg#3 se guarda en buffer, cuando llega msg#2 se procesan ambos (2 y 3).
+// Expected result: msg#3 is buffered; when msg#2 arrives both are processed (2 and 3).
 // Velocidad final: 15000 + 5000 - 2000 = 18000.
 func TestProcessMessageOutOfOrder(t *testing.T) {
 	// Arrange
@@ -113,9 +113,9 @@ func TestProcessMessageOutOfOrder(t *testing.T) {
 	}
 }
 
-// TestProcessDuplicateMessage verifica que los mensajes duplicados sean rechazados.
+// TestProcessDuplicateMessage verifies that duplicate messages are rejected.
 // Send the same message #1 twice (at-least-once delivery guarantee).
-// Resultado esperado: primer mensaje OK, segundo mensaje rechazado con error.
+// Expected result: first message OK, second message rejected with error.
 func TestProcessDuplicateMessage(t *testing.T) {
 	// Arrange
 	service := setupTestService()
@@ -201,7 +201,7 @@ func TestProcessMessageWithLargeGap(t *testing.T) {
 // TestMultipleRocketsSimultaneously verifies that multiple rockets are processed independently.
 // Launch rocket-A (Falcon-9, 15000) and rocket-B (Starship, 20000) simultaneously.
 // Resultado esperado: ambos cohetes existen con sus velocidades correctas.
-// Demuestra que el buffer es independiente por canal.
+// Demonstrates that the buffer is independent per channel.
 func TestMultipleRocketsSimultaneously(t *testing.T) {
 	// Arrange
 	service := setupTestService()
@@ -250,9 +250,9 @@ func TestMultipleRocketsSimultaneously(t *testing.T) {
 	}
 }
 
-// TestBufferReprocessing verifica que el buffer reordene y procese mensajes correctamente.
+// TestBufferReprocessing verifies that the buffer reorders and processes messages correctly.
 // Send messages: 1, 4, 2, 3 (out of order)
-// Resultado esperado: se procesan en orden: 1→2→3→4
+// Expected result: processed in order: 1→2→3→4
 // Estado final: launch(10000) + increase(2000) - decrease(1000) + explode = 11000, exploded.
 func TestBufferReprocessing(t *testing.T) {
 	// Arrange

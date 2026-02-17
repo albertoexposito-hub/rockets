@@ -37,18 +37,18 @@ func (k *KafkaEventStore) AppendEvent(event domain.DomainEvent) error {
 	return nil
 }
 
-// GetEventsByChannel obtiene todos los eventos de un canal
+// GetEventsByChannel gets all events for a channel
 func (k *KafkaEventStore) GetEventsByChannel(channel *domain.Channel) ([]domain.DomainEvent, error) {
 	k.mu.RLock()
 	defer k.mu.RUnlock()
 	items := k.events[channel.Value()]
-	// Devolver copia para no exponer el slice interno
+	// Return a copy to avoid exposing internal slice
 	copySlice := make([]domain.DomainEvent, len(items))
 	copy(copySlice, items)
 	return copySlice, nil
 }
 
-// GetAllChannels obtiene todos los canales que tienen eventos
+// GetAllChannels gets all channels that have events
 func (k *KafkaEventStore) GetAllChannels() []string {
 	k.mu.RLock()
 	defer k.mu.RUnlock()

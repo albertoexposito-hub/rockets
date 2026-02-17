@@ -62,7 +62,7 @@ func main() {
 		IdleTimeout:  60 * time.Second,
 	}
 
-	// Iniciar en goroutine
+	// Start in a goroutine
 	go func() {
 		slog.Info("Server starting", "addr", server.Addr)
 		if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
