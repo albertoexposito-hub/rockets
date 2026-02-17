@@ -8,7 +8,7 @@ import (
 
 func setupTestService() *RocketApplicationService {
 	eventStore := infrastructure.NewKafkaEventStore("localhost:9092")
-	repository := infrastructure.NewRocketRepository("localhost:6379", eventStore)
+	repository := infrastructure.NewRocketRepository(eventStore)
 	return NewRocketApplicationService(repository, eventStore)
 }
 

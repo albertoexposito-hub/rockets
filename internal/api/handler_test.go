@@ -15,7 +15,7 @@ import (
 
 func setupTestServer() (*application.WorkerPool, *application.RocketApplicationService) {
 	eventStore := infrastructure.NewKafkaEventStore("localhost:9092")
-	repository := infrastructure.NewRocketRepository("localhost:6379", eventStore)
+	repository := infrastructure.NewRocketRepository(eventStore)
 	service := application.NewRocketApplicationService(repository, eventStore)
 
 	ctx := context.Background()
